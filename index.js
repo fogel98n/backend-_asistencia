@@ -30,9 +30,9 @@ app.use(cors(corsOptions));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-// Rutas
+// Solo usa tu router con rutas API
 app.use("/", routes);
 
 app.listen(port, () => {
-  console.log(`Servidor corriendo en el puerto ${port}`);
+  console.log(`Servidor API corriendo en el puerto ${port}`);
 });
