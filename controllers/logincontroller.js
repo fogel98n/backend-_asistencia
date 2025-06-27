@@ -3,7 +3,7 @@ const connection = require("../models/db");
 
 module.exports.login = (req, res) => {
   console.log("Petición recibida en /login_asistencia");
-  
+
   const { email, password } = req.body;
 
   if (!email || !password) {
@@ -27,7 +27,7 @@ module.exports.login = (req, res) => {
       const user = result[0];
       const token = jwt.sign(
         { email: user.email, rol: "coordinador" },
-        "Stack", // Cambia esta clave secreta por algo seguro en producción
+        "Stack",
         { expiresIn: "365d" }
       );
 
@@ -42,11 +42,11 @@ module.exports.login = (req, res) => {
       });
     }
 
-    // Si no es coordinador, buscar en maestros
     const queryMaestro = `
-      SELECT id_maestro AS id, nombre, email 
-      FROM maestros 
-      WHERE email = ? AND password = ?
+      SELECT m.id_maestro AS id, m.nombre, m.email, m.id_grado, g.id_nivel
+      FROM maestros m
+      JOIN grados g ON m.id_grado = g.id_grado
+      WHERE m.email = ? AND m.password = ?
     `;
 
     connection.query(queryMaestro, [email, password], (err, result) => {
@@ -57,20 +57,23 @@ module.exports.login = (req, res) => {
 
       if (result.length > 0) {
         const user = result[0];
-        const token = jwt.sign(
-          { email: user.email, rol: "maestro" },
-          "Stack",
-          { expiresIn: "365d" }
-        );
+
+        const payload = {
+          id: user.id,
+          nombre: user.nombre,
+          email: user.email,
+          rol: "maestro",
+          id_grado: user.id_grado,
+          id_nivel: user.id_nivel, 
+        };
+
+        const token = jwt.sign(payload, "Stack", { expiresIn: "365d" });
 
         console.log("Maestro autenticado:", user.email);
 
         return res.status(200).json({
           token,
-          nombre: user.nombre,
-          email: user.email,
-          id: user.id,
-          rol: "maestro",
+          ...payload,
         });
       }
 
