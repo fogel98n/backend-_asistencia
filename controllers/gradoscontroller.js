@@ -1,6 +1,5 @@
 const connection = require("../models/db");
 
-// Obtener todos los grados
 module.exports.grados = (req, res) => {
   const query = "SELECT * FROM grados";
   connection.query(query, (err, results) => {
@@ -12,13 +11,24 @@ module.exports.grados = (req, res) => {
   });
 };
 
-// Obtener grados filtrados por id_nivel
 module.exports.gradosPorNivel = (req, res) => {
-  const idNivel = req.params.idNivel;
+  const { idNivel } = req.params;
   const query = "SELECT * FROM grados WHERE id_nivel = ?";
   connection.query(query, [idNivel], (err, results) => {
     if (err) {
       console.error("Error al obtener grados por nivel:", err);
+      return res.status(500).json({ error: "Error en el servidor" });
+    }
+    res.json(results);
+  });
+};
+
+module.exports.gradoPorId = (req, res) => {
+  const { idGrado } = req.params;
+  const query = "SELECT * FROM grados WHERE id_grado = ?";
+  connection.query(query, [idGrado], (err, results) => {
+    if (err) {
+      console.error("Error al obtener grado por id:", err);
       return res.status(500).json({ error: "Error en el servidor" });
     }
     res.json(results);
