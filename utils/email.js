@@ -5,13 +5,10 @@ const transporter = nodemailer.createTransport({
   port: 587,
   auth: {
     user: "f495c116689bc2932c06123a99efea1b", 
-    pass: "a9b1d79a5a0023201b28ce5357fae9b9", // ⚠️ Te falta generarlo (sigue leyendo)
+    pass: "a9b1d79a5a0023201b28ce5357fae9b9", 
   }
 });
 
-/**
- * Envía un código al correo del usuario
- */
 async function enviarCodigoRecuperacion(destinatario, codigo) {
   const mailOptions = {
     from: '"Asistencia Educativa" <no-reply@asistencia.com>',
@@ -30,3 +27,4 @@ async function enviarCodigoRecuperacion(destinatario, codigo) {
 }
 
 module.exports = { enviarCodigoRecuperacion };
+

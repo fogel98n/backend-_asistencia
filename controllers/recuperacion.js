@@ -9,44 +9,83 @@ function generarCodigo() {
 }
 
 async function solicitarCodigo(req, res) {
-  const { email } = req.body;
+  let email = req.body.email;
+  if (!email) return res.status(400).json({ message: "Email es requerido" });
 
-  connection.query("SELECT * FROM usuarios WHERE email = ?", [email], async (err, results) => {
-    if (err || results.length === 0) return res.status(404).json({ message: "Usuario no encontrado" });
+  email = email.trim().toLowerCase();
 
-    const codigo = generarCodigo();
-    codigos.set(email, codigo);
+  // Buscamos en maestros o coordinadores
+  const queryCoordinador = "SELECT * FROM coordinadores WHERE LOWER(email) = ?";
+  const queryMaestro = "SELECT * FROM maestros WHERE LOWER(email) = ?";
 
-    try {
-      await enviarCodigoRecuperacion(email, codigo);
-      res.json({ message: "Código enviado al correo" });
-    } catch {
-      res.status(500).json({ message: "Error al enviar el código" });
+  connection.query(queryCoordinador, [email], (err, coordResults) => {
+    if (err) return res.status(500).json({ message: "Error interno" });
+
+    if (coordResults.length > 0) {
+      return enviarYCodificar(email, res);
     }
+
+    connection.query(queryMaestro, [email], (err, maestroResults) => {
+      if (err) return res.status(500).json({ message: "Error interno" });
+
+      if (maestroResults.length > 0) {
+        return enviarYCodificar(email, res);
+      }
+
+      return res.status(404).json({ message: "Usuario no encontrado" });
+    });
   });
 }
 
-async function verificarCodigo(req, res) {
-  const { email, codigo } = req.body;
+async function enviarYCodificar(email, res) {
+  try {
+    const codigo = generarCodigo();
+    codigos.set(email, codigo);
+    await enviarCodigoRecuperacion(email, codigo);
+    return res.json({ message: "Código enviado al correo" });
+  } catch (error) {
+    console.error("Error al enviar el código:", error);
+    return res.status(500).json({ message: "Error al enviar el código" });
+  }
+}
 
-  if (codigos.get(email) !== codigo) return res.status(400).json({ message: "Código incorrecto" });
+async function verificarCodigo(req, res) {
+  let email = req.body.email;
+  let codigo = req.body.codigo;
+  if (!email || !codigo) {
+    return res.status(400).json({ message: "Email y código son requeridos" });
+  }
+  email = email.trim().toLowerCase();
+
+  if (codigos.get(email) !== codigo) {
+    return res.status(400).json({ message: "Código incorrecto" });
+  }
 
   res.json({ message: "Código verificado" });
 }
 
 async function cambiarPassword(req, res) {
-  const { email, codigo, nuevaPassword } = req.body;
+  let { email, codigo, nuevaPassword } = req.body;
+  if (!email || !codigo || !nuevaPassword) {
+    return res.status(400).json({ message: "Email, código y nueva contraseña son requeridos" });
+  }
+  email = email.trim().toLowerCase();
 
-  if (codigos.get(email) !== codigo) return res.status(400).json({ message: "Código incorrecto" });
+  if (codigos.get(email) !== codigo) {
+    return res.status(400).json({ message: "Código incorrecto" });
+  }
 
   connection.query(
-    "UPDATE usuarios SET password = ? WHERE email = ?",
+    "UPDATE maestros SET password = ? WHERE LOWER(email) = ?",
     [nuevaPassword, email],
-    (err) => {
-      if (err) return res.status(500).json({ message: "Error al actualizar contraseña" });
+    (err, result) => {
+      if (err) {
+        console.error("Error al actualizar contraseña:", err);
+        return res.status(500).json({ message: "Error al actualizar contraseña" });
+      }
 
       codigos.delete(email);
-      res.json({ message: "Contraseña actualizada correctamente" });
+      return res.json({ message: "Contraseña actualizada correctamente" });
     }
   );
 }
@@ -54,7 +93,5 @@ async function cambiarPassword(req, res) {
 module.exports = {
   solicitarCodigo,
   verificarCodigo,
-  cambiarPassword
+  cambiarPassword,
 };
-       
-
