@@ -1,6 +1,5 @@
 const connection = require("../models/db");
 
-// Obtener alumnos
 module.exports.alumnos = (req, res) => {
     const consult = "SELECT * FROM alumnos";
     connection.query(consult, (err, results) => {
@@ -35,5 +34,31 @@ module.exports.agregarAlumno = (req, res) => {
         }
 
         res.json({ message: "Alumno agregado correctamente", id_alumno: result.insertId });
+    });
+};
+
+module.exports.eliminarAlumno = (req, res) => {
+    const { id } = req.params;
+
+    const eliminarAsistencias = "DELETE FROM asistencias WHERE id_alumno = ?";
+    connection.query(eliminarAsistencias, [id], (err) => {
+        if (err) {
+            console.error("Error al eliminar asistencias del alumno:", err);
+            return res.status(500).json({ error: "Error al eliminar asistencias del alumno" });
+        }
+
+        const eliminarAlumno = "DELETE FROM alumnos WHERE id_alumno = ?";
+        connection.query(eliminarAlumno, [id], (err, result) => {
+            if (err) {
+                console.error("Error al eliminar alumno:", err);
+                return res.status(500).json({ error: "Error al eliminar alumno" });
+            }
+
+            if (result.affectedRows === 0) {
+                return res.status(404).json({ error: "Alumno no encontrado" });
+            }
+
+            res.json({ message: "Alumno eliminado correctamente" });
+        });
     });
 };

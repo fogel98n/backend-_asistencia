@@ -1,5 +1,6 @@
 const connection = require("../models/db");
 
+// Registrar o actualizar asistencias
 module.exports.registrarAsistencia = (req, res) => {
   const asistencias = req.body;
 
@@ -23,20 +24,17 @@ module.exports.registrarAsistencia = (req, res) => {
 
   const promises = asistencias.map(({ id_alumno, fecha, estado }) => {
     return new Promise((resolve, reject) => {
-      // Revisar si ya existe una asistencia para el alumno y la fecha dada
       const consultaExistencia = "SELECT id_asistencia FROM asistencias WHERE id_alumno = ? AND fecha = ?";
       connection.query(consultaExistencia, [id_alumno, fecha], (err, results) => {
         if (err) return reject(err);
 
         if (results.length > 0) {
-          // Si existe, actualiza el estado
           const consultaUpdate = "UPDATE asistencias SET estado = ? WHERE id_alumno = ? AND fecha = ?";
           connection.query(consultaUpdate, [estado, id_alumno, fecha], (err2) => {
             if (err2) return reject(err2);
             resolve();
           });
         } else {
-          // Si no existe, inserta un nuevo registro
           const consultaInsert = "INSERT INTO asistencias (id_alumno, fecha, estado) VALUES (?, ?, ?)";
           connection.query(consultaInsert, [id_alumno, fecha, estado], (err3) => {
             if (err3) return reject(err3);
@@ -55,4 +53,34 @@ module.exports.registrarAsistencia = (req, res) => {
     });
 };
 
+// Obtener asistencias por grado o por rango de fechas
+module.exports.obtenerAsistencias = (req, res) => {
+  const { id_grado, fechaInicio, fechaFin } = req.query;
 
+  let sql = `
+    SELECT a.id_asistencia, a.id_alumno, a.fecha, a.estado, al.nombre AS nombre_alumno, al.id_grado
+    FROM asistencias a
+    INNER JOIN alumnos al ON a.id_alumno = al.id_alumno
+    WHERE 1 = 1
+  `;
+  const params = [];
+
+  if (id_grado) {
+    sql += " AND al.id_grado = ?";
+    params.push(id_grado);
+  }
+
+  if (fechaInicio && fechaFin) {
+    sql += " AND a.fecha BETWEEN ? AND ?";
+    params.push(fechaInicio, fechaFin);
+  }
+
+  connection.query(sql, params, (err, results) => {
+    if (err) {
+      console.error("Error al obtener asistencias:", err);
+      return res.status(500).json({ error: "Error al obtener asistencias" });
+    }
+
+    res.json(results);
+  });
+};
