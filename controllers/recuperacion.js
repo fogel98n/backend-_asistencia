@@ -1,4 +1,4 @@
-const connection = require("../models/db");
+const pool = require("../models/db");
 const { enviarCodigoRecuperacion } = require("../utils/email");
 const crypto = require("crypto");
 
@@ -14,27 +14,30 @@ async function solicitarCodigo(req, res) {
 
   email = email.trim().toLowerCase();
 
-  // Buscamos en maestros o coordinadores
-  const queryCoordinador = "SELECT * FROM coordinadores WHERE LOWER(email) = ?";
-  const queryMaestro = "SELECT * FROM maestros WHERE LOWER(email) = ?";
-
-  connection.query(queryCoordinador, [email], (err, coordResults) => {
-    if (err) return res.status(500).json({ message: "Error interno" });
+  try {
+    const [coordResults] = await pool.query(
+      "SELECT * FROM coordinadores WHERE LOWER(email) = ?",
+      [email]
+    );
 
     if (coordResults.length > 0) {
-      return enviarYCodificar(email, res);
+      return await enviarYCodificar(email, res);
     }
 
-    connection.query(queryMaestro, [email], (err, maestroResults) => {
-      if (err) return res.status(500).json({ message: "Error interno" });
+    const [maestroResults] = await pool.query(
+      "SELECT * FROM maestros WHERE LOWER(email) = ?",
+      [email]
+    );
 
-      if (maestroResults.length > 0) {
-        return enviarYCodificar(email, res);
-      }
+    if (maestroResults.length > 0) {
+      return await enviarYCodificar(email, res);
+    }
 
-      return res.status(404).json({ message: "Usuario no encontrado" });
-    });
-  });
+    return res.status(404).json({ message: "Usuario no encontrado" });
+  } catch (err) {
+    console.error("Error interno:", err);
+    return res.status(500).json({ message: "Error interno" });
+  }
 }
 
 async function enviarYCodificar(email, res) {
@@ -75,19 +78,18 @@ async function cambiarPassword(req, res) {
     return res.status(400).json({ message: "Código incorrecto" });
   }
 
-  connection.query(
-    "UPDATE maestros SET password = ? WHERE LOWER(email) = ?",
-    [nuevaPassword, email],
-    (err, result) => {
-      if (err) {
-        console.error("Error al actualizar contraseña:", err);
-        return res.status(500).json({ message: "Error al actualizar contraseña" });
-      }
+  try {
+    const [result] = await pool.query(
+      "UPDATE maestros SET password = ? WHERE LOWER(email) = ?",
+      [nuevaPassword, email]
+    );
 
-      codigos.delete(email);
-      return res.json({ message: "Contraseña actualizada correctamente" });
-    }
-  );
+    codigos.delete(email);
+    return res.json({ message: "Contraseña actualizada correctamente" });
+  } catch (err) {
+    console.error("Error al actualizar contraseña:", err);
+    return res.status(500).json({ message: "Error al actualizar contraseña" });
+  }
 }
 
 module.exports = {
@@ -95,3 +97,4 @@ module.exports = {
   verificarCodigo,
   cambiarPassword,
 };
+
