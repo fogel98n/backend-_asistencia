@@ -1,13 +1,13 @@
-const connection = require("../models/db");
+const pool = require("../models/db");
 
-module.exports.niveles_educativos = (req, res) => {
-    const consult = "SELECT * FROM niveles_educativos";
-    connection.query(consult, (err, results) => {
-        if (err) {
-            console.error('Error al obtener los niveles:', err);
-            return res.status(500).json({ error: 'Error en el servidor' });
-        }
+module.exports.niveles_educativos = async (req, res) => {
+  const consult = "SELECT * FROM niveles_educativos";
 
-        res.json(results);
-    });
+  try {
+    const [results] = await pool.query(consult);
+    res.json(results);
+  } catch (err) {
+    console.error('Error al obtener los niveles:', err);
+    res.status(500).json({ error: 'Error en el servidor' });
+  }
 };

@@ -10,6 +10,8 @@ const allowedOrigins = [
   "http://localhost:5500",
   "http://127.0.0.1:5501",
   "http://localhost:5501",
+  "https://fogel98n.github.io",                     
+  "https://fogel98n.github.io/asistencia-2025/",    
 ];
 
 const corsOptions = {
@@ -30,7 +32,7 @@ app.use(cors(corsOptions));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-// Solo usa tu router con rutas API
+
 app.use("/", routes);
 
 app.listen(port, () => {
