@@ -13,7 +13,10 @@ module.exports.grados = async (req, res) => {
 module.exports.gradosPorNivel = async (req, res) => {
   const { idNivel } = req.params;
   try {
-    const [results] = await pool.query("SELECT * FROM grados WHERE id_nivel = ?", [idNivel]);
+    const [results] = await pool.query(
+      "SELECT * FROM grados WHERE id_nivel = ?",
+      [idNivel]
+    );
     res.json(results);
   } catch (err) {
     console.error("Error al obtener grados por nivel:", err);
@@ -24,7 +27,10 @@ module.exports.gradosPorNivel = async (req, res) => {
 module.exports.gradoPorId = async (req, res) => {
   const { idGrado } = req.params;
   try {
-    const [results] = await pool.query("SELECT * FROM grados WHERE id_grado = ?", [idGrado]);
+    const [results] = await pool.query(
+      "SELECT * FROM grados WHERE id_grado = ?",
+      [idGrado]
+    );
     if (results.length === 0) {
       return res.status(404).json({ message: "Grado no encontrado" });
     }
