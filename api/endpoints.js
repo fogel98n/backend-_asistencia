@@ -6,10 +6,10 @@ const { register } = require("../controllers/registrocontroller");
 const { niveles_educativos } = require("../controllers/niveles_educativoController");
 const { grados, gradosPorNivel, gradoPorId } = require("../controllers/gradoscontroller");
 const { alumnos, agregarAlumno, eliminarAlumno } = require("../controllers/alumnos");
-const {registrarAsistencia,obtenerAsistencias } = require("../controllers/asitencia");
+const { registrarAsistencia, obtenerAsistencias } = require("../controllers/asitencia");
 const { guardarReporteUniforme } = require("../controllers/uniforme");
 const { maestros, eliminarMaestro } = require("../controllers/maestros");
-const {solicitarCodigo,verificarCodigo,cambiarPassword} = require("../controllers/recuperacion");
+const { solicitarCodigo, verificarCodigo, cambiarPassword } = require("../controllers/recuperacion");
 
 // Rutas de autenticación
 router.post("/login_asistencia", login);
@@ -30,9 +30,9 @@ router.get("/alumnos", alumnos);
 router.post("/alumnosRegistro", agregarAlumno);
 router.delete("/alumnos/:id", eliminarAlumno);
 
-//  Rutas de asistencia
+// Rutas de asistencia
 router.post("/asistencia", registrarAsistencia);
-router.get("/asistencia", obtenerAsistencias); 
+router.get("/asistencia", obtenerAsistencias);
 
 // Rutas de reportes
 router.post("/reporte-uniforme", guardarReporteUniforme);
